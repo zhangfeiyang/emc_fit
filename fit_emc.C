@@ -101,12 +101,15 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 
 	if(max_entries*(index+1) > total_entries) return false;
 
-    float edep;
-    if(source == "Ge68") edep = 1.0219978;
-    if(source == "Cs137") edep = 0.661657;
-    if(source == "Mn54") edep = 0.834848;
-    if(source == "Co60") edep = 2.5057385;
-    if(source == "K40") edep = 1.4608;
+    	float edep;
+    	if(source == "Ge68") edep = 1.0219978;
+    	if(source == "Cs137") edep = 0.661657;
+    	if(source == "Mn54") edep = 0.834848;
+    	if(source == "Co60") edep = 2.5057385;
+    	if(source == "K40") edep = 1.4608;
+	
+	t->Draw("totalPE>>h1(200,0,0)",Form("totalPE>0 && TMath::Abs(edep-%f)>0.001",edep),"",max_entries,max_entries*index);
+	TH1F *h1 = (TH1F*)gDirectory->Get("h1");	
 	
 	t->Draw("totalPE>>h(200,0,0)",Form("totalPE>0 && TMath::Abs(edep-%f)<0.001",edep),"",max_entries,max_entries*index);
 	TH1F *h = (TH1F*)gDirectory->Get("h");	
@@ -187,6 +190,10 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	f3->SetLineColor(kBlack);
 	f2->Draw("same");
 	f3->Draw("same");
+
+	h1->SetLineColor(kGreen);
+	h1->SetLineWidth(2);
+	h1->Draw("same");
 
 	string filename = dirname+"result_emc.C";
 	c1->SaveAs(&filename[0]);
