@@ -168,7 +168,7 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"M","", int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 	}
 
 	f->GetParameters(pars);
