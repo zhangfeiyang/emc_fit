@@ -6,14 +6,16 @@ double myfun(double *xx, double *par)
     double alpha = par[1];
     double mu = par[2];
     double sigma = par[3];
-	double lambda = par[4];
+    double lambda = par[4];
+    double beta = par[5];
     double pi = 3.141592654;
 
     double gaus = alpha/sigma/sqrt(2*pi)*exp(-0.5*(E-mu)*(E-mu)/sigma/sigma);
-	double exp_c1 = (1-alpha)*lambda*exp((sigma*sigma*lambda*lambda+2*lambda*E)/2)/(exp(lambda*mu)-1);
-	double exp1 = TMath::Erf((mu-E-sigma*sigma*lambda)/(TMath::Sqrt(2)*sigma))-TMath::Erf((-E-sigma*sigma*lambda)/sqrt(2)/sigma);	
+    double exp_c1 = beta*lambda*exp((sigma*sigma*lambda*lambda+2*lambda*E)/2)/(exp(lambda*mu)-1);
+    double exp1 = TMath::Erf((mu-E-sigma*sigma*lambda)/(TMath::Sqrt(2)*sigma))-TMath::Erf((-E-sigma*sigma*lambda)/sqrt(2)/sigma);	
+    double constant = (1-alpha-beta)/mu*(TMath::Erf((mu-E)/sqrt(2)/sigma)-TMath::Erf(-E/sqrt(2)/sigma));
 
-    return c*(gaus + exp_c1*exp1);
+    return c*(gaus + exp_c1*exp1 + constant);
 }
 
 double myfun2(double *xx, double *par)
@@ -23,7 +25,8 @@ double myfun2(double *xx, double *par)
     double alpha = par[1];
     double mu = par[2];
     double sigma = par[3];
-	double lambda = par[4];
+    double lambda = par[4];
+    double beta = par[5];
     double pi = 3.141592654;
 
     double gaus = alpha/sigma/sqrt(2*pi)*exp(-0.5*(E-mu)*(E-mu)/sigma/sigma);
@@ -38,12 +41,15 @@ double myfun3(double *xx, double *par)
     double alpha = par[1];
     double mu = par[2];
     double sigma = par[3];
-	double lambda = par[4];
+    double lambda = par[4];
+    double beta = par[5];
     double pi = 3.141592654;
 
-	double exp_c1 = (1-alpha)*lambda*exp((sigma*sigma*lambda*lambda+2*lambda*E)/2)/(exp(lambda*mu)-1);
-	double exp1 = TMath::Erf((mu-E-sigma*sigma*lambda)/(TMath::Sqrt(2)*sigma))-TMath::Erf((-E-sigma*sigma*lambda)/sqrt(2)/sigma);	
-    return c*(exp_c1*exp1);
+    double exp_c1 = beta*lambda*exp((sigma*sigma*lambda*lambda+2*lambda*E)/2)/(exp(lambda*mu)-1);
+    double exp1 = TMath::Erf((mu-E-sigma*sigma*lambda)/(TMath::Sqrt(2)*sigma))-TMath::Erf((-E-sigma*sigma*lambda)/sqrt(2)/sigma);	
+    double constant = (1-alpha-beta)/mu*(TMath::Erf((mu-E)/sqrt(2)/sigma)-TMath::Erf(-E/sqrt(2)/sigma));
+
+    return c*(exp_c1*exp1 + constant);
 }
 
 
@@ -82,7 +88,7 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
     	gStyle->SetStatW(0.15);
     	gStyle->SetStatH(0.15);
     	TFile *file;
-    	TF1 *f = new TF1("f",myfun,0,20000,5);
+    	TF1 *f = new TF1("f",myfun,0,20000,6);
 
 	TChain *t = new TChain("evt");
 
@@ -136,23 +142,25 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	h = (TH1F*)gDirectory->Get("h");
 	h->Fit("gaus");
 
-    fun = h->GetFunction("gaus");
+     	fun = h->GetFunction("gaus");
 
-     C = fun->GetParameter(0);
-     mean = fun->GetParameter(1);
-     emean = fun->GetParError(2);
-     sigma = fun->GetParameter(2);
+     	C = fun->GetParameter(0);
+     	mean = fun->GetParameter(1);
+     	emean = fun->GetParError(2);
+     	sigma = fun->GetParameter(2);
     
 
 	pars[0] = C*sqrt(2*3.14159)*sigma;
 	pars[1] = 0.9;
 	pars[2] = mean;
 	pars[3] = sigma;
-	pars[4] = 0.1;
+	pars[4] = 0.001;
+	pars[5] = 0.05;
 	f->SetParLimits(1,0,1);
+	f->SetParLimits(5,0,0.05);
 	f->SetParameters(pars);
 
-	f->SetParNames("C","#alpha","#mu","#sigma","#lambda","#gamma");
+	f->SetParNames("C","#alpha","#mu","#sigma","#lambda","#beta");
 	t->Draw(Form("totalPE>>h(%i,%i,%i)",int(5*sigma),int(mean-10*sigma),int(mean-10*sigma)+int(5*sigma)*3),"","",max_entries,max_entries*index);	
 	h = (TH1F*)gDirectory->Get("h");
 	
@@ -169,20 +177,18 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 		h->Fit(f,"M","", int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 	}
 
 	f->GetParameters(pars);
 	double *tmps = f->GetParErrors();
-	memcpy(epars,tmps,5*sizeof(double));
+	memcpy(epars,tmps,6*sizeof(double));
 
 	ndf = f->GetNDF();
 	chi2 = f->GetChisquare();
 
-    TF1 *f2 = new TF1("f",myfun2,0,20000,5);
-    TF1 *f3 = new TF1("f",myfun3,0,20000,5);
+    	TF1 *f2 = new TF1("f",myfun2,0,20000,5);
+    	TF1 *f3 = new TF1("f",myfun3,0,20000,5);
 	f2->SetParameters(pars);
 	f3->SetParameters(pars);
 
@@ -209,8 +215,8 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 }
 int main(int argc,char **argv){
 
-	double *pars = new double[5];
-	double *epars = new double[5];
+	double *pars = new double[6];
+	double *epars = new double[6];
 	double chi2;
 	double ndf;
 	string source = argv[1];
