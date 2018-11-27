@@ -68,7 +68,7 @@ double myfun4(double *xx, double *par)
 }
 
 
-bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,double &ndf,string dirname,int index)
+bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,double &ndf,double& idealmean,double& idealsigma,string dirname,int index)
 {
 
 	string source = argv[1];
@@ -97,13 +97,34 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 		max_entries = 40000;
 
 	if(source=="Cs137" || source== "Mn54")
-		max_entries = 82000;
+		max_entries = 5235226;
 
 	if(max_entries*(index+1) > total_entries) return false;
+
+    float edep;
+    if(source == "Ge68") edep = 1.0219978;
+    if(source == "Cs137") edep = 0.661657;
+    if(source == "Mn54") edep = 0.834848;
+    if(source == "Co60") edep = 2.5057385;
+    if(source == "K40") edep = 1.4608;
 	
+	t->Draw("totalPE>>h(200,0,0)",Form("totalPE>0 && TMath::Abs(edep-%f)<0.001",edep),"",max_entries,max_entries*index);
+	TH1F *h = (TH1F*)gDirectory->Get("h");	
+	
+	h->Fit("gaus");
+
+    TF1* fun = h->GetFunction("gaus");
+    double C = fun->GetParameter(0);
+    double mean = fun->GetParameter(1);
+    double emean = fun->GetParError(2);
+    double sigma = fun->GetParameter(2);
+    idealmean = mean;
+    idealsigma = sigma;
+	
+
 	cout << max_entries*(index+1) << "\t" << max_entries*index << "\n";
 	t->Draw("totalPE>>h(200,0,0)","totalPE>0","",max_entries,max_entries*index);
-	TH1F *h = (TH1F*)gDirectory->Get("h");
+	h = (TH1F*)gDirectory->Get("h");
 
 	int maxbin = h->GetMaximumBin();
 	double maxbincenter = h->GetBinCenter(maxbin);
@@ -112,12 +133,12 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	h = (TH1F*)gDirectory->Get("h");
 	h->Fit("gaus");
 
-    TF1* fun = h->GetFunction("gaus");
+    fun = h->GetFunction("gaus");
 
-    double C = fun->GetParameter(0);
-    double mean = fun->GetParameter(1);
-    double emean = fun->GetParError(2);
-    double sigma = fun->GetParameter(2);
+     C = fun->GetParameter(0);
+     mean = fun->GetParameter(1);
+     emean = fun->GetParError(2);
+     sigma = fun->GetParameter(2);
     
 
 	pars[0] = C*sqrt(2*3.14159)*sigma;
@@ -141,12 +162,12 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 		h->Fit(f,"M","",pars[2]-pars[3]*10,pars[2]+pars[3]);
 	}
 	else{
-		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 		h->Fit(f,"M","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 	}
 
@@ -196,7 +217,8 @@ int main(int argc,char **argv){
 
 
 	ofstream fout2("test_data");
-	while(get_data(argc,argv,pars,epars,chi2,ndf,dirname,index) && index <1){
+	double idealmean,idealsigma;
+	while(get_data(argc,argv,pars,epars,chi2,ndf,idealmean,idealsigma,dirname,index) && index <1){
 		
 		fout<< chi2 <<"\t"<< ndf <<"\t";
 
@@ -206,6 +228,8 @@ int main(int argc,char **argv){
 		}
 
 		fout << "\n";
+		fout << "bias of mean is "<<100*(pars[2]/idealmean - 1) << "\n";
+		fout << "bias of sigma is "<<100*(pars[3]/idealsigma - 1) << "\n";
 		index++;
 	}
 
