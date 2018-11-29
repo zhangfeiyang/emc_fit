@@ -10,7 +10,7 @@
 		evt->GetEntry(i);
 		float edep = evt->GetLeaf("edep")->GetValue(0);
 		float totalPE = evt->GetLeaf("totalPE")->GetValue(0);
-		totalPE = gRandom->Gaus(edep*1252.63,1252.63*edep*0.03762);
+		totalPE = gRandom->Gaus(edep*1252.63,1252.63*edep*3.7327429678e-2);
 		t->Fill(totalPE,edep);
 	}
 

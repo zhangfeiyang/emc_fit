@@ -86,7 +86,7 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 
 	TChain *t = new TChain("evt");
 
-	t->Add("new.root");
+	t->Add("new1.root");
 	
 	int total_entries = t->GetEntries();	
 
@@ -108,8 +108,6 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
     	if(source == "Co60") edep = 2.5057385;
     	if(source == "K40") edep = 1.4608;
 	
-	t->Draw("totalPE>>h1(200,0,0)",Form("totalPE>0 && TMath::Abs(edep-%f)>0.001",edep),"",max_entries,max_entries*index);
-	TH1F *h1 = (TH1F*)gDirectory->Get("h1");	
 	
 	t->Draw("totalPE>>h(200,0,0)",Form("totalPE>0 && TMath::Abs(edep-%f)<0.001",edep),"",max_entries,max_entries*index);
 	TH1F *h = (TH1F*)gDirectory->Get("h");	
@@ -148,13 +146,19 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	pars[2] = mean;
 	pars[3] = sigma;
 	pars[4] = 0.1;
-	f->SetParLimits(4,0.0001,0.001);
+	//f->SetParLimits(4,0.0001,0.001);
 	f->SetParameters(pars);
 
 	f->SetParNames("C","#alpha","#mu","#sigma","#lambda","#gamma");
 	t->Draw(Form("totalPE>>h(%i,%i,%i)",int(5*sigma),int(mean-10*sigma),int(mean-10*sigma)+int(5*sigma)*3),"","",max_entries,max_entries*index);	
 	cout << "data range is " << int(5*sigma) << "\t" << int(mean-10*sigma) << "\t" << int(mean-10*sigma)+int(5*sigma)*3 << "\n";
 	h = (TH1F*)gDirectory->Get("h");
+
+	t->Draw(Form("totalPE>>h1(%i,%i,%i)",int(5*sigma),int(mean-10*sigma),int(mean-10*sigma)+int(5*sigma)*3),Form("totalPE>0 && TMath::Abs(edep-%f)>0.001",edep),"",max_entries,max_entries*index);
+	TH1F *h1 = (TH1F*)gDirectory->Get("h1");	
+
+	t->Draw(Form("totalPE>>h2(%i,%i,%i)",int(5*sigma),int(mean-10*sigma),int(mean-10*sigma)+int(5*sigma)*3),Form("totalPE>0 && TMath::Abs(edep-%f)<0.001",edep),"",max_entries,max_entries*index);
+	TH1F *h2 = (TH1F*)gDirectory->Get("h2");	
 	
 	h->Fit(f,"M","");
 	f->GetParameters(pars);
@@ -165,13 +169,13 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 		h->Fit(f,"M","",pars[2]-pars[3]*10,pars[2]+pars[3]);
 	}
 	else{
-		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","", int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-5*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-5*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-5*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-5*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-5*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-5*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"M","", int(mean-5*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 	}
 
 	f->GetParameters(pars);
@@ -187,13 +191,21 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	f3->SetParameters(pars);
 
 	f2->SetLineColor(kBlue);
-	f3->SetLineColor(kBlack);
+	f3->SetLineColor(kGreen);
+	h->SetLineColor(kBlack);
+	h1->SetLineWidth(2);
+	h->Draw();
 	f2->Draw("same");
 	f3->Draw("same");
 
-	h1->SetLineColor(kGreen);
+	h1->SetLineColor(kBlack);
 	h1->SetLineWidth(2);
 	h1->Draw("same");
+
+	h2->SetLineColor(kBlack);
+	h2->SetLineWidth(2);
+	h2->Draw("same");
+	h2->Fit("gaus");
 
 	string filename = dirname+"result_emc.C";
 	c1->SaveAs(&filename[0]);
