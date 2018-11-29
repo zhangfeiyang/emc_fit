@@ -116,14 +116,13 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	
 	h->Fit("gaus");
 
-    TF1* fun = h->GetFunction("gaus");
-    double C = fun->GetParameter(0);
-    double mean = fun->GetParameter(1);
-    double emean = fun->GetParError(2);
-    double sigma = fun->GetParameter(2);
-    idealmean = mean;
-    idealsigma = sigma;
-	
+    	TF1* fun = h->GetFunction("gaus");
+    	double C = fun->GetParameter(0);
+    	double mean = fun->GetParameter(1);
+    	double emean = fun->GetParError(2);
+    	double sigma = fun->GetParameter(2);
+    	idealmean = mean;
+    	idealsigma = sigma;
 
 	cout << max_entries*(index+1) << "\t" << max_entries*index << "\n";
 	t->Draw("totalPE>>h(200,0,0)","totalPE>0","",max_entries,max_entries*index);
@@ -136,7 +135,7 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	h = (TH1F*)gDirectory->Get("h");
 	h->Fit("gaus");
 
-    fun = h->GetFunction("gaus");
+     fun = h->GetFunction("gaus");
 
      C = fun->GetParameter(0);
      mean = fun->GetParameter(1);
@@ -149,11 +148,12 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	pars[2] = mean;
 	pars[3] = sigma;
 	pars[4] = 0.1;
-	f->SetParLimits(1,0,1);
+	f->SetParLimits(4,0.0001,0.001);
 	f->SetParameters(pars);
 
 	f->SetParNames("C","#alpha","#mu","#sigma","#lambda","#gamma");
 	t->Draw(Form("totalPE>>h(%i,%i,%i)",int(5*sigma),int(mean-10*sigma),int(mean-10*sigma)+int(5*sigma)*3),"","",max_entries,max_entries*index);	
+	cout << "data range is " << int(5*sigma) << "\t" << int(mean-10*sigma) << "\t" << int(mean-10*sigma)+int(5*sigma)*3 << "\n";
 	h = (TH1F*)gDirectory->Get("h");
 	
 	h->Fit(f,"M","");
@@ -165,13 +165,13 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 		h->Fit(f,"M","",pars[2]-pars[3]*10,pars[2]+pars[3]);
 	}
 	else{
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"MQ","",int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
-		h->Fit(f,"M","", int(mean-10*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"MQ","",int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
+		h->Fit(f,"M","", int(mean-3*sigma),int(mean-5*sigma)+int(5*sigma)*2);
 	}
 
 	f->GetParameters(pars);
@@ -181,8 +181,8 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 	ndf = f->GetNDF();
 	chi2 = f->GetChisquare();
 
-    TF1 *f2 = new TF1("f",myfun2,0,20000,5);
-    TF1 *f3 = new TF1("f",myfun3,0,20000,5);
+    	TF1 *f2 = new TF1("f",myfun2,0,20000,5);
+    	TF1 *f3 = new TF1("f",myfun3,0,20000,5);
 	f2->SetParameters(pars);
 	f3->SetParameters(pars);
 
