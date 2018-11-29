@@ -86,7 +86,7 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
 
 	TChain *t = new TChain("evt");
 
-	t->Add("new1.root");
+	t->Add("new.root");
 	
 	int total_entries = t->GetEntries();	
 
@@ -142,11 +142,12 @@ bool get_data(int argc,char **argv,double *pars,double *epars,double& chi2,doubl
     
 
 	pars[0] = C*sqrt(2*3.14159)*sigma;
-	pars[1] = 0.9;
+	pars[1] = 0.910735;
 	pars[2] = mean;
 	pars[3] = sigma;
-	pars[4] = 0.1;
-	//f->SetParLimits(4,0.0001,0.001);
+	pars[4] = 1.89691e-03;
+	f->SetParLimits(4,0,3e-3);
+	//f->FixParameter(4,1.89691e-03);
 	f->SetParameters(pars);
 
 	f->SetParNames("C","#alpha","#mu","#sigma","#lambda","#gamma");
